@@ -76,9 +76,9 @@ to the relevant events in the `startup()` method and then unsubscribe again in `
 
 Or you can simply opt out of using the Contributte wrapper and use the `symfony/event-dispatcher`
 package directly - all you need to do is register the `EventDispatcher` class as a service
-in your DIC config. The `contributte/event-dispatcher-extra` package which bridges built-in
-Nette events into the Symfony EventDispatcher doesn't depend on the Contributte wrapper,
-so you can still use it even if you ditch the wrapper.
+in your DIC config. The `contributte/event-dispatcher-extra` package which bridges several
+commonly used built-in Nette events into the Symfony EventDispatcher doesn't depend
+on the Contributte wrapper, so you can still use it even if you ditch the wrapper.
 
 ### Doctrine Event Manager
 
