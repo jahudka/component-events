@@ -26,10 +26,7 @@
     "autoload": {
         "psr-4": {
             "Jahudka\\ComponentEvents\\": "src/"
-        },
-        "files": [
-            "src/compatibility.php"
-        ]
+        }
     },
     "autoload-dev": {
         "psr-4": {

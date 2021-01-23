@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace Jahudka\ComponentEvents\Bridges\NextrasORM;
 
+use Jahudka\ComponentEvents\IRelay;
 use Nette\Application\IPresenter;
 use Nette\Application\UI\Presenter;
-use Jahudka\ComponentEvents\IRelay;
 use Nextras\Orm\Model\Model;
 
 
@@ -20,8 +20,6 @@ class Relay implements IRelay {
 
     private ?string $presenterClass = null;
 
-    private bool $subscribed = false;
-
     private array $cleanup = [];
 
     public function __construct(Model $model, array $eventMap) {
@@ -31,20 +29,17 @@ class Relay implements IRelay {
 
     public function setPresenter(IPresenter $presenter) : void {
         $this->unsubscribeEvents();
-        $this->presenter = $presenter;
-        $this->presenterClass = get_class($presenter);
-        $this->subscribeEvents();
+        $this->subscribeEvents($presenter);
     }
 
-    private function subscribeEvents() : void {
-        if ($this->subscribed) {
-            return;
-        }
+    private function subscribeEvents(IPresenter $presenter) : void {
+        $class = get_class($presenter);
 
-        $this->subscribed = true;
+        if (isset($this->eventMap[$class])) {
+            $this->presenter = $presenter;
+            $this->presenterClass = $class;
 
-        if (isset($this->eventMap[$this->presenterClass])) {
-            foreach ($this->eventMap[$this->presenterClass] as $entity => $events) {
+            foreach ($this->eventMap[$class] as $entity => $events) {
                 $repository = $this->model->getRepositoryForEntity($entity);
 
                 foreach ($events as $event => $_) {
@@ -57,12 +52,6 @@ class Relay implements IRelay {
     }
 
     private function unsubscribeEvents() : void {
-        if (!$this->subscribed) {
-            return;
-        }
-
-        $this->subscribed = false;
-
         foreach ($this->cleanup as $entity => $events) {
             $repository = $this->model->getRepositoryForEntity($entity);
 
@@ -75,6 +64,7 @@ class Relay implements IRelay {
             }
         }
 
+        $this->presenter = $this->presenterClass = null;
         $this->cleanup = [];
     }
 

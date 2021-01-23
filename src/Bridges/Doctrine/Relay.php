@@ -5,9 +5,9 @@ declare(strict_types=1);
 namespace Jahudka\ComponentEvents\Bridges\Doctrine;
 
 use Doctrine\Common\EventManager;
+use Jahudka\ComponentEvents\IRelay;
 use Nette\Application\IPresenter;
 use Nette\Application\UI\Presenter;
-use Jahudka\ComponentEvents\IRelay;
 
 
 class Relay implements IRelay {
@@ -21,8 +21,6 @@ class Relay implements IRelay {
 
     private ?string $presenterClass = null;
 
-    private bool $subscribed = false;
-
     public function __construct(EventManager $manager, array $eventMap) {
         $this->manager = $manager;
         $this->eventMap = $eventMap;
@@ -30,32 +28,23 @@ class Relay implements IRelay {
 
     public function setPresenter(IPresenter $presenter) : void {
         $this->unsubscribeEvents();
-        $this->presenter = $presenter;
-        $this->presenterClass = get_class($presenter);
-        $this->subscribeEvents();
+        $this->subscribeEvents($presenter);
     }
 
-    private function subscribeEvents() : void {
-        if ($this->subscribed) {
-            return;
-        }
+    private function subscribeEvents(IPresenter $presenter) : void {
+        $class = get_class($presenter);
 
-        $this->subscribed = true;
-
-        if (isset($this->eventMap[$this->presenterClass])) {
-            $this->manager->addEventListener(array_keys($this->eventMap[$this->presenterClass]), $this);
+        if (isset($this->eventMap[$class])) {
+            $this->presenter = $presenter;
+            $this->presenterClass = $class;
+            $this->manager->addEventListener(array_keys($this->eventMap[$class]), $this);
         }
     }
 
     private function unsubscribeEvents() : void {
-        if (!$this->subscribed) {
-            return;
-        }
-
-        $this->subscribed = false;
-
-        if (isset($this->eventMap[$this->presenterClass])) {
+        if ($this->presenterClass && isset($this->eventMap[$this->presenterClass])) {
             $this->manager->removeEventListener(array_keys($this->eventMap[$this->presenterClass]), $this);
+            $this->presenter = $this->presenterClass = null;
         }
     }
 

@@ -23,7 +23,7 @@ your business logic emit an event when the cart contents are changed. ComponentE
 a relay listener for the event in the event dispatcher and when the event is emitted it will relay it
 to the component, which will get lazily created at that moment if it wasn't created yet.
 
-The package works by statically analysing all services implementing the `Nette\Application\IPresenter`
+The package works by statically analysing all services extending the `Nette\Application\UI\Presenter`
 class when the DI container is being compiled. Since components are created using statically defined
 `createComponent<Name>()` methods it is easy to traverse the component tree and check each
 component for the relevant interfaces, provided the factory methods have appropriate return type
@@ -39,15 +39,50 @@ composer require jahudka/component-events
 
 Then you need to register the `Jahudka\ComponentEvents\ComponentEventsExtension` in your config.
 
+## Configuration
+
+ComponentEvents is designed to be as automatic as possible - every integration detects
+automatically whether it's supposed to be enabled. That said, you may need to override
+that magic sometimes. This is how you do it:
+
+```neon
+componentEvents:
+    # string means class name of the integration's Jahudka\ComponentEvents\IBridge implementation
+    # (this is how custom integrations are registered, see below); bool means enabled
+    # and null means detect automatically (which is the default)
+    <bridge name>: string|bool|null
+```
+
 ## Integrations
 
 ### Symfony Event Dispatcher
 
+**config key:** `symfony`
+
 Integration with `symfony/event-dispatcher` and its Nette wrapper `contributte/event-dispatcher`
-works out of the box and you don't need to do anything special to use it. Simply implement the
+works out of the box and you don't need to do anything special to use them. Simply implement the
 `Symfony\Component\EventDispatcher\EventSubscriberInterface` in any component you wish and prosper.
 
+The only caveat with the Symfony EventDispatcher comes from the Contributte wrapper which
+automatically subscribes _all_ services implementing the appropriate interface and there is
+no way around it. This means that it will also autosubscribe all presenters which implement
+the interface - and that in turn means that all presenters will be automatically created
+when the EventDispatcher service is accessed and they'll receive events even when they're
+not the current presenter. The `lazy` option of the Contributte wrapper doesn't help this,
+enabling it only postpones the moment the presenters are created. Unless something changes
+in Contributte's code the only way you can have presenters listen to events is to inject
+the EventDispatcher service into the presenter and have the presenter subscribe
+to the relevant events in the `startup()` method and then unsubscribe again in `shutdown()`.
+
+Or you can simply opt out of using the Contributte wrapper and use the `symfony/event-dispatcher`
+package directly - all you need to do is register the `EventDispatcher` class as a service
+in your DIC config. The `contributte/event-dispatcher-extra` package which bridges built-in
+Nette events into the Symfony EventDispatcher doesn't depend on the Contributte wrapper,
+so you can still use it even if you ditch the wrapper.
+
 ### Doctrine Event Manager
+
+**config key:** `doctrine`
 
 Integration with `doctrine/event-manager`, as well as any wrapper which registers an instance of
 the `Doctrine\Common\EventManager` class or its descendant in the DIC, should work _almost_ as well
@@ -61,6 +96,8 @@ access a dependency that should've been set in the constructor the call will fai
 bridge will simply ignore the component in that case.
 
 ### Nextras ORM Events
+
+**config key:** `nextras-orm`
 
 The `contributte/nextras-orm-events` package is by far the most obnoxious to use because, unlike
 the previous two, this one _requires_ you to code something differently than you're used to.
@@ -115,3 +152,28 @@ will resolve to `App\Components\App\Entity\Book`, which is the
 **only acceptable way it should ever be resolved** - if you want it to resolve
 to `App\Entity\Book`, either `use` it and specify just `Book` in the annotation,
 or prefix it with a backslash - just like you would in PHP code.
+
+## Custom integrations
+
+You can of course create a custom integration for any EventDispatcher you wish!
+An integration consists of three classes:
+
+### Bridge
+
+The integration's Bridge class must implement the `Jahudka\ComponentEvents\IBridge`
+interface. This class is used during DIC rebuild to detect the presence of the
+event dispatcher the integration is bridging to and to customise how
+the other two classes of the integration will be created.
+
+### Analyser
+
+This class is responsible for analysing a presenter or a component and extract
+all events the target wants to subscribe to. It must implement
+the `Jahudka\ComponentEvents\IAnalyser` interface.
+
+### Relay
+
+This class is the only one used at runtime. Its responsibility is to subscribe
+to all the relevant events for the current presenter and then to relay
+the events to their proper destination when they're fired. It must implement
+the `Jahudka\ComponentEvents\IBridge` interface.

@@ -10,6 +10,8 @@ use Nette\DI\CompilerExtension;
 use Nette\DI\ContainerBuilder;
 use Nette\DI\Definitions\Definition;
 use Nette\DI\Definitions\ServiceDefinition;
+use Nette\Schema\Expect;
+use Nette\Schema\Schema;
 use ReflectionClass;
 
 
@@ -27,18 +29,29 @@ class ComponentEventsExtension extends CompilerExtension {
         'nextras-orm' => null,
     ];
 
-    public function beforeCompile() : void {
-        $getType = method_exists(ServiceDefinition::class, 'getType') ? 'getType' : 'getClass';
-        $setType = method_exists(ServiceDefinition::class, 'setType') ? 'setType' : 'setClass';
+    public function getConfigSchema() : Schema {
+        return Expect::structure([
+                'doctrine' => Expect::bool()->nullable(),
+                'symfony' => Expect::bool()->nullable(),
+                'nextras-orm' => Expect::bool()->nullable(),
+            ])
+            ->otherItems(Expect::string())
+            ->required(false);
+    }
 
-        $config = $this->getConfig() + $this->defaults;
+    public function loadConfiguration() : void {
+        Compat::aliasClasses();
+    }
+
+    public function beforeCompile() : void {
+        $config = Compat::getConfig($this, $this->defaults);
         $builder = $this->getContainerBuilder();
         $bridges = $this->getBridges($config, $builder);
-        $listeners = $this->analysePresenters($builder->findByType(IPresenter::class), $bridges, $getType);
+        $listeners = $this->analysePresenters($builder->findByType(IPresenter::class), $bridges);
 
         if ($listeners) {
             $relay = $builder->addDefinition($this->prefix('relay'));
-            $relay->$setType(Relay::class);
+            $relay->setType(Relay::class);
 
             /** @var ServiceDefinition $application */
             $applicationId = $builder->getByType(Application::class);
@@ -55,12 +68,12 @@ class ComponentEventsExtension extends CompilerExtension {
      * @param Definition[] $presenters
      * @param IBridge[] $bridges
      */
-    private function analysePresenters(array $presenters, array $bridges, string $getType) : array {
+    private function analysePresenters(array $presenters, array $bridges) : array {
         $analyser = $this->createAnalyser($bridges);
         $listeners = [];
 
         foreach ($presenters as $presenter) {
-            $class = $presenter->$getType();
+            $class = $presenter->getType();
             $rc = new ReflectionClass($class);
 
             foreach ($analyser->analysePresenter($rc) as $id => $components) {
@@ -87,7 +100,7 @@ class ComponentEventsExtension extends CompilerExtension {
     /**
      * @return IBridge[]
      */
-    private function getBridges(array $config, ContainerBuilder $builder) : array {
+    private function getBridges(object $config, ContainerBuilder $builder) : array {
         $bridges = [];
 
         foreach ($config as $id => $enabled) {
@@ -102,5 +115,4 @@ class ComponentEventsExtension extends CompilerExtension {
 
         return $bridges;
     }
-
 }
