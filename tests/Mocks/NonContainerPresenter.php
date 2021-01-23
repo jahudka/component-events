@@ -6,7 +6,7 @@ namespace Jahudka\ComponentEvents\Tests\Mocks;
 
 use Nette\Application\IPresenter;
 use Nette\Application\Request;
-use Nette\Application\Response;
+use Nette\Application\IResponse;
 use Nette\Application\Responses\VoidResponse;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
@@ -20,7 +20,7 @@ class NonContainerPresenter implements IPresenter, EventSubscriberInterface {
         ];
     }
 
-    public function run(Request $request) : Response {
+    public function run(Request $request) : IResponse {
         return new VoidResponse();
     }
 

@@ -1,0 +1,38 @@
+name: Tests
+on:
+  push:
+    branches:
+      - master
+jobs:
+  tests-oldest:
+    name: tests-oldest
+    runs-on: ubuntu-latest
+    steps:
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '7.4'
+          tools: composer:v1
+      - name: Checkout repository
+        uses: actions/checkout@master
+      - name: Install dependencies
+        run: composer install --no-progress
+      - name: Downgrade dependencies
+        run: composer update --no-progress --prefer-lowest
+      - name: Run tests
+        run: vendor/bin/phpunit
+  tests-latest:
+    name: tests-latest
+    runs-on: ubuntu-latest
+    steps:
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.0'
+          tools: composer:v2
+      - name: Checkout repository
+        uses: actions/checkout@master
+      - name: Install dependencies
+        run: composer install --no-progress
+      - name: Run tests
+        run: vendor/bin/phpunit

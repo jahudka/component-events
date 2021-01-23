@@ -3,7 +3,7 @@ nextras.orm:
 
 services:
     - Nette\Caching\Storages\DevNullStorage
-    - Nette\Application\PresenterFactory(Nette\Bridges\ApplicationDI\PresenterFactoryCallback(invalidLinkMode: 0))
+    - Nette\Application\PresenterFactory(Nette\Bridges\ApplicationDI\PresenterFactoryCallback(invalidLinkMode: 0, touchToRefresh: null))
     - Nette\Application\Routers\SimpleRouter
     - Nette\Application\Application(httpRequest: Nette\Http\Request(Nette\Http\UrlScript()), httpResponse: Nette\Http\Response())
 

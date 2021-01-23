@@ -1,6 +1,10 @@
 ComponentEvents
 ===============
 
+[![Latest Stable Version](https://poser.pugx.org/jahudka/component-events/v)](https://packagist.org/packages/jahudka/component-events)
+[![License](https://poser.pugx.org/jahudka/component-events/license)](https://packagist.org/packages/jahudka/component-events)
+![Tests](https://github.com/jahudka/component-events/workflows/Tests/badge.svg)
+
 This package provides a lazy bridge between various event dispatchers and the Nette Component model.
 It integrates out of the box with `symfony/event-dispatcher`, `doctrine/event-manager` and
 `contributte/nextras-orm-events`, but other projects can be easily added. The primary use case
