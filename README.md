@@ -10,8 +10,21 @@ It integrates out of the box with `symfony/event-dispatcher`, `doctrine/event-ma
 `contributte/nextras-orm-events`, but other projects can be easily added. The primary use case
 of components reacting to events is, of course, redrawing snippets.
 
+Why is this useful? Well, if you're developing an AJAX-first site and make heavy use of components
+you'll run into situations where some business logic triggered from within one component should be
+noticed by another, which might decide it needs to be redrawn. For example a shopping cart: if you
+have a product list with an "Add to Cart" button then the product list is probably going to be 
+composed of several components; the "Add to Cart" button might be one of them. If the user hits
+the button, the button component handles that directly and so it can redraw itself as needed, but
+how will the Cart component sitting in the top right of the page know that it should be redrawn as well?
+When the signal from the button press is being handled by the Button component the Cart component might
+not even be created yet. Enter ComponentEvents: make the Cart component an event subscriber and have
+your business logic emit an event when the cart contents are changed. ComponentEvents will register
+a relay listener for the event in the event dispatcher and when the event is emitted it will relay it
+to the component, which will get lazily created at that moment if it wasn't created yet.
+
 The package works by statically analysing all services implementing the `Nette\Application\IPresenter`
-class when the DI container is compiled. Since components are created using statically defined
+class when the DI container is being compiled. Since components are created using statically defined
 `createComponent<Name>()` methods it is easy to traverse the component tree and check each
 component for the relevant interfaces, provided the factory methods have appropriate return type
 hints.
