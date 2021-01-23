@@ -36,7 +36,7 @@ class Bridge implements IBridge {
         foreach ($listenerMap as $presenter => $components) {
             foreach ($components as $component => $events) {
                 foreach ($events as $event) {
-                    $map[$event][$presenter][] = $component;
+                    $map[$presenter][$event][] = $component;
                 }
             }
         }

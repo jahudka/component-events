@@ -5,22 +5,23 @@ declare(strict_types=1);
 namespace Jahudka\ComponentEvents;
 
 use Nette\ComponentModel\Container;
+use ReflectionClass;
 
 
 class Analyser {
 
     /** @var IAnalyser[] */
-    private $analysers = [];
+    private array $analysers = [];
 
     public function add(IAnalyser $analyser, string $id) : void {
         $this->analysers[$id] = $analyser;
     }
 
-    public function analysePresenter(\ReflectionClass $presenter) : array {
+    public function analysePresenter(ReflectionClass $presenter) : array {
         $listeners = [];
         $stack = [[null, $presenter]];
 
-        /** @var \ReflectionClass $component */
+        /** @var ReflectionClass $component */
         while ([$name, $component] = array_shift($stack)) {
             foreach ($this->analyse($component) as $id => $events) {
                 $listeners[$id][$name] = $events;
@@ -34,7 +35,7 @@ class Analyser {
                     ) {
                         $stack[] = [
                             ($name ? $name . Container::NAME_SEPARATOR : '') . lcfirst($m[1]),
-                            new \ReflectionClass($type),
+                            new ReflectionClass($type),
                         ];
                     }
                 }
@@ -44,7 +45,7 @@ class Analyser {
         return $listeners;
     }
 
-    private function analyse(\ReflectionClass $component) : array {
+    private function analyse(ReflectionClass $component) : array {
         $listeners = [];
 
         foreach ($this->analysers as $id => $analyser) {

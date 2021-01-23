@@ -11,7 +11,7 @@ use Nette\Application\IPresenter;
 class Relay {
 
     /** @var IRelay[] */
-    private $relays = [];
+    private array $relays = [];
 
     public function add(IRelay $relay) : void {
         $this->relays[] = $relay;

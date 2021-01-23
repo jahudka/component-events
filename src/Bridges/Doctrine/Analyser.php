@@ -6,11 +6,12 @@ namespace Jahudka\ComponentEvents\Bridges\Doctrine;
 
 use Doctrine\Common\EventSubscriber;
 use Jahudka\ComponentEvents\IAnalyser;
+use ReflectionClass;
 
 
 class Analyser implements IAnalyser {
 
-    public function analyse(\ReflectionClass $component) : ?array {
+    public function analyse(ReflectionClass $component) : ?array {
         if (!$component->implementsInterface(EventSubscriber::class)) {
             return null;
         }

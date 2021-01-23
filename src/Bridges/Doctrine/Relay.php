@@ -12,14 +12,16 @@ use Jahudka\ComponentEvents\IRelay;
 
 class Relay implements IRelay {
 
-    private $manager;
+    private EventManager $manager;
 
-    private $eventMap;
+    private array $eventMap;
 
-    /** @var IPresenter|Presenter */
-    private $presenter;
+    /** @var IPresenter|Presenter|null */
+    private ?IPresenter $presenter = null;
 
-    private $subscribed = false;
+    private ?string $presenterClass = null;
+
+    private bool $subscribed = false;
 
     public function __construct(EventManager $manager, array $eventMap) {
         $this->manager = $manager;
@@ -27,7 +29,9 @@ class Relay implements IRelay {
     }
 
     public function setPresenter(IPresenter $presenter) : void {
+        $this->unsubscribeEvents();
         $this->presenter = $presenter;
+        $this->presenterClass = get_class($presenter);
         $this->subscribeEvents();
     }
 
@@ -38,11 +42,20 @@ class Relay implements IRelay {
 
         $this->subscribed = true;
 
-        foreach (array_keys($this->eventMap) as $event) {
-            $this->manager->addEventListener(
-                $event,
-                $this
-            );
+        if (isset($this->eventMap[$this->presenterClass])) {
+            $this->manager->addEventListener(array_keys($this->eventMap[$this->presenterClass]), $this);
+        }
+    }
+
+    private function unsubscribeEvents() : void {
+        if (!$this->subscribed) {
+            return;
+        }
+
+        $this->subscribed = false;
+
+        if (isset($this->eventMap[$this->presenterClass])) {
+            $this->manager->removeEventListener(array_keys($this->eventMap[$this->presenterClass]), $this);
         }
     }
 
@@ -51,10 +64,8 @@ class Relay implements IRelay {
             return;
         }
 
-        $presenter = get_class($this->presenter);
-
-        if (isset($this->eventMap[$event][$presenter])) {
-            foreach ($this->eventMap[$event][$presenter] as $component) {
+        if (isset($this->eventMap[$this->presenterClass][$event])) {
+            foreach ($this->eventMap[$this->presenterClass][$event] as $component) {
                 call_user_func_array(
                     [$component ? $this->presenter->getComponent($component) : $this->presenter, $event],
                     $arguments
@@ -62,5 +73,4 @@ class Relay implements IRelay {
             }
         }
     }
-
 }

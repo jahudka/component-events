@@ -5,17 +5,23 @@
     "description": "Relay events to lazily created components",
     "homepage": "https://github.com/jahudka/component-events",
     "authors": [
-        {"name": "Dan Kadera", "email": "me@subsonic.cz"}
+        {
+            "name": "Dan Kadera",
+            "email": "me@subsonic.cz"
+        }
     ],
     "require": {
-        "php": ">=7.1",
+        "php": ">=7.4",
         "nette/component-model": "^2.4 || ^3.0",
         "nette/di": "^2.4 || ^v3.0",
         "nette/application": "^2.4 || ^3.0"
     },
     "require-dev": {
-        "doctrine/event-manager": "^1.0",
-        "symfony/event-dispatcher": "^3.4 || ^4.0"
+        "doctrine/event-manager": "^1.1",
+        "symfony/event-dispatcher": "^4.4 || ^5.1",
+        "phpunit/phpunit": "^9.5",
+        "contributte/nextras-orm-events": "^0.7.0",
+        "nextras/orm": "^3.1"
     },
     "autoload": {
         "psr-4": {
@@ -23,6 +29,19 @@
         },
         "files": [
             "src/compatibility.php"
+        ]
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Jahudka\\ComponentEvents\\Tests\\": "tests/"
+        }
+    },
+    "archive": {
+        "exclude": [
+            "/tests",
+            "/.editorconfig",
+            "/.gitignore",
+            "/phpunit.xml.dist"
         ]
     }
 }

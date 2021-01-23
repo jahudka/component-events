@@ -12,25 +12,28 @@ use Symfony\Component\EventDispatcher\EventDispatcher;
 
 class Relay implements IRelay {
 
-    private $dispatcher;
+    private EventDispatcher $dispatcher;
 
-    private $eventMap;
+    private array $eventMap;
 
-    private $idMap;
+    /** @var IPresenter|Presenter|null */
+    private ?IPresenter $presenter = null;
 
-    /** @var IPresenter|Presenter */
-    private $presenter;
+    private ?string $presenterClass = null;
 
-    private $subscribed = false;
+    private bool $subscribed = false;
 
-    public function __construct(EventDispatcher $dispatcher, array $eventMap, array $idMap) {
+    private array $cleanup = [];
+
+    public function __construct(EventDispatcher $dispatcher, array $eventMap) {
         $this->dispatcher = $dispatcher;
         $this->eventMap = $eventMap;
-        $this->idMap = $idMap;
     }
 
     public function setPresenter(IPresenter $presenter) : void {
+        $this->unsubscribeEvents();
         $this->presenter = $presenter;
+        $this->presenterClass = get_class($presenter);
         $this->subscribeEvents();
     }
 
@@ -41,31 +44,41 @@ class Relay implements IRelay {
 
         $this->subscribed = true;
 
-        foreach ($this->idMap as $id => [$event, $priority]) {
-            $this->dispatcher->addListener(
-                $event,
-                [$this, 'relay__' . $id],
-                $priority
-            );
+        if (isset($this->eventMap[$this->presenterClass])) {
+            foreach ($this->eventMap[$this->presenterClass] as $event => $priorityMap) {
+                foreach ($priorityMap as $priority => $_) {
+                    $handler = fn (...$args) => $this->relay($event, $priority, $args);
+                    $this->dispatcher->addListener($event, $handler, $priority);
+                    $this->cleanup[$event][$priority] = $handler;
+                }
+            }
         }
     }
 
-    public function __call(string $name, array $arguments) {
+
+    private function unsubscribeEvents() : void {
+        if (!$this->subscribed) {
+            return;
+        }
+
+        $this->subscribed = false;
+
+        foreach ($this->cleanup as $event => $listeners) {
+            foreach ($listeners as $listener) {
+                $this->dispatcher->removeListener($event, $listener);
+            }
+        }
+
+        $this->cleanup = [];
+    }
+
+    private function relay(string $event, int $priority, array $arguments) : void {
         if (!$this->presenter) {
             return;
         }
 
-        $id = (int) substr($name, 7);
-
-        if (!isset($this->idMap[$id])) {
-            throw new \RuntimeException('Method ' . static::class . '::' . $name . '() doesn\'t exist');
-        }
-
-        [$event, $priority] = $this->idMap[$id];
-        $presenter = get_class($this->presenter);
-
-        if (isset($this->eventMap[$event][$priority][$presenter])) {
-            foreach ($this->eventMap[$event][$priority][$presenter] as $component => $methods) {
+        if (isset($this->eventMap[$this->presenterClass][$event][$priority])) {
+            foreach ($this->eventMap[$this->presenterClass][$event][$priority] as $component => $methods) {
                 foreach ($methods as $method) {
                     call_user_func_array(
                         [$component ? $this->presenter->getComponent($component) : $this->presenter, $method],

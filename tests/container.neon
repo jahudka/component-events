@@ -1,0 +1,16 @@
+nextras.orm:
+    repositoryFinder: Nextras\Orm\Bridges\NetteDI\DIRepositoryFinder
+
+services:
+    - Nette\Caching\Storages\DevNullStorage
+    - Nette\Application\PresenterFactory(Nette\Bridges\ApplicationDI\PresenterFactoryCallback(invalidLinkMode: 0))
+    - Nette\Application\Routers\SimpleRouter
+    - Nette\Application\Application(httpRequest: Nette\Http\Request(Nette\Http\UrlScript()), httpResponse: Nette\Http\Response())
+
+    - Doctrine\Common\EventManager
+    - Symfony\Component\EventDispatcher\EventDispatcher
+
+    - Jahudka\ComponentEvents\Tests\Mocks\NextrasORM\TestRepository(Nextras\Orm\TestHelper\TestMapper())
+
+    - Jahudka\ComponentEvents\Tests\Mocks\NonContainerPresenter
+    - Jahudka\ComponentEvents\Tests\Mocks\ContainerPresenter
