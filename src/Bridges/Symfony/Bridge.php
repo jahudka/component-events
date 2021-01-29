@@ -8,13 +8,13 @@ use Nette\DI\ContainerBuilder;
 use Nette\DI\Definitions\Statement;
 use Jahudka\ComponentEvents\IBridge;
 use Jahudka\ComponentEvents\IAnalyser;
-use Symfony\Component\EventDispatcher\EventDispatcher;
+use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 
 
 class Bridge implements IBridge {
 
     public function detectPresence(ContainerBuilder $builder) : bool {
-        return !empty($builder->findByType(EventDispatcher::class));
+        return !empty($builder->findByType(EventDispatcherInterface::class));
     }
 
     public function createAnalyser() : IAnalyser {
