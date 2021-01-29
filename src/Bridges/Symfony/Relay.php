@@ -7,12 +7,12 @@ namespace Jahudka\ComponentEvents\Bridges\Symfony;
 use Jahudka\ComponentEvents\IRelay;
 use Nette\Application\IPresenter;
 use Nette\Application\UI\Presenter;
-use Symfony\Component\EventDispatcher\EventDispatcher;
+use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 
 
 class Relay implements IRelay {
 
-    private EventDispatcher $dispatcher;
+    private EventDispatcherInterface $dispatcher;
 
     private array $eventMap;
 
@@ -23,7 +23,7 @@ class Relay implements IRelay {
 
     private array $cleanup = [];
 
-    public function __construct(EventDispatcher $dispatcher, array $eventMap) {
+    public function __construct(EventDispatcherInterface $dispatcher, array $eventMap) {
         $this->dispatcher = $dispatcher;
         $this->eventMap = $eventMap;
     }
